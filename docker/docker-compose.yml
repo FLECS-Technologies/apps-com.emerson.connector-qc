@@ -1,0 +1,71 @@
+# Copyright 2022 Emerson.  All rights reserved.  This file and its contents may not be modified, 
+# copied, or disclosed to third parties without Emerson’s express authorization.  
+# Any authorized copy or reproduction of this file and its contents, in whole or part, must include this statement.
+services:
+  connector_demo:
+    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc:1.0.0
+    user: root
+    environment:
+      - NEOReadDebugKeys=1
+      - OverrideGpuAddressSpace=48
+    command:
+      # for custom script name replace `python_dispatcher_v2.py` with your script's name
+      # "/home/pypacedge/<YOUR_SCRIPT_NAME>.py"
+      - "/home/openvino/user_scripts/img_process_loop.py"
+    container_name: connector_demo
+    restart: always
+    privileged: true
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /docker_val:/docker_val
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - unix_socket:/unix_socket
+      - nodered:/nrimages
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - 993
+    #keep container running, even if there is no service to process  
+    #not needed if Python app is continuously running
+    stdin_open: true
+    tty: true
+    networks:
+      - corenet
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    security_opt:
+      - "no-new-privileges:true"
+
+  # Run-once init container: deploys Node-RED flows and imports the Grafana dashboard
+  # via their APIs, then exits. Credentials come from the environment (or an .env file).
+  provisioner:
+    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc-provisioner:1.0.0
+    container_name: connector_provisioner
+    restart: "no"
+    environment:
+      - NODE_RED_URL=${NODE_RED_URL:-http://emerson-nodered:1880/nodered}
+      - GRAFANA_URL=${GRAFANA_URL:-http://emerson-grafana:3000}
+      - NODE_RED_USER
+      - NODE_RED_PASSWORD
+      - GRAFANA_USER
+      - GRAFANA_PASSWORD
+    networks:
+      - corenet
+    security_opt:
+      - "no-new-privileges:true"
+
+networks:
+  corenet:
+    external: true
+#networks:
+#  internal:
+#    driver_opts:
+#      com.docker.network.bridge.name: br-pacedge
+
+volumes:
+  unix_socket:
+    driver: local
+  nodered:
+    driver: local
+  
