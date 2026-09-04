@@ -3,7 +3,7 @@
 # Any authorized copy or reproduction of this file and its contents, in whole or part, must include this statement.
 services:
   connector_demo:
-    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc:1.0.0
+    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc:1.0.1
     user: root
     environment:
       - NEOReadDebugKeys=1
@@ -38,18 +38,21 @@ services:
       - "no-new-privileges:true"
 
   # Run-once init container: deploys Node-RED flows and imports the Grafana dashboard
-  # via their APIs, then exits. Credentials come from the environment (or an .env file).
+  # via their APIs, then exits. Admin passwords are read from the host's ansible-vault file.
   provisioner:
-    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc-provisioner:1.0.0
+    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc-provisioner:1.0.1
     container_name: connector_provisioner
     restart: "no"
     environment:
       - NODE_RED_URL=${NODE_RED_URL:-http://emerson-nodered:1880/nodered}
       - GRAFANA_URL=${GRAFANA_URL:-http://emerson-grafana:3000}
-      - NODE_RED_USER
-      - NODE_RED_PASSWORD
-      - GRAFANA_USER
-      - GRAFANA_PASSWORD
+      # Admin usernames are fixed; passwords come from the ansible-vault file mounted below.
+      - VAULT_FILE=/vault/vault.yml
+      - VAULT_PASS_FILE=/vault/.vaultpass
+      - VAULT_CRED_KEY=admin
+    volumes:
+      - ${VAULT_HOST_FILE:-/home/admin/pacedgen/inventory/host_vars/localhost/vault.yml}:/vault/vault.yml:ro
+      - ${VAULT_HOST_PASS:-/home/admin/pacedgen/project/.vaultpass}:/vault/.vaultpass:ro
     networks:
       - corenet
     security_opt:
