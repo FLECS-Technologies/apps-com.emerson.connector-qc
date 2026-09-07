@@ -40,7 +40,7 @@ services:
   # Run-once init container: deploys Node-RED flows and imports the Grafana dashboard
   # via their APIs, then exits. Admin passwords are read from the host's ansible-vault file.
   provisioner:
-    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc-provisioner:1.0.1
+    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc-provisioner:1.0.2
     container_name: connector_provisioner
     restart: "no"
     environment:
@@ -50,9 +50,11 @@ services:
       - VAULT_FILE=/vault/vault.yml
       - VAULT_PASS_FILE=/vault/.vaultpass
       - VAULT_CRED_KEY=admin
+      - WHOLEIMG_DEST=/nodered/WholeImg
     volumes:
       - ${VAULT_HOST_FILE:-/home/admin/pacedgen/inventory/host_vars/localhost/vault.yml}:/vault/vault.yml:ro
       - ${VAULT_HOST_PASS:-/home/admin/pacedgen/project/.vaultpass}:/vault/.vaultpass:ro
+      - ${WHOLEIMG_HOST_DIR:-/home/admin/docker/volumes/pacedge_nodered/_data/WholeImg}:/nodered/WholeImg
     networks:
       - corenet
     security_opt:
