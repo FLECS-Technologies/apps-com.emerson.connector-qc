@@ -40,7 +40,7 @@ services:
   # Run-once init container: deploys Node-RED flows and imports the Grafana dashboard
   # via their APIs, then exits. Admin passwords are read from the host's ansible-vault file.
   provisioner:
-    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc-provisioner:1.0.2
+    image: itaimageregistry.azurecr.io/pacedge/emerson-llama-connector-qc-provisioner:1.0.3
     container_name: connector_provisioner
     restart: "no"
     environment:
